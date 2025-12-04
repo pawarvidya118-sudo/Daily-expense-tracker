@@ -1,0 +1,129 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+void addExpense() {
+    FILE *fp = fopen("expense.txt", "a");
+    if (fp == NULL) {
+        printf("Cannot open expense.txt for writing\n");
+        return;
+    }
+    char category[100];
+    float amount;
+    printf("Enter category: ");
+    fgets(category, sizeof(category), stdin);
+    if (category[0] == '\n') fgets(category, sizeof(category), stdin);
+    category[strcspn(category, "\n")] = '\0';
+    printf("Enter amount: ");
+    if (scanf("%f", &amount) != 1) {
+        printf("Invalid amount\n");
+        while (getchar() != '\n');
+        fclose(fp);
+        return;
+    }
+    while (getchar() != '\n');
+    fprintf(fp, "%s\t%.2f\n", category, amount);
+    fclose(fp);
+    printf("Saved\n");
+}
+
+void viewExpenses() {
+    FILE *fp = fopen("expense.txt", "r");
+    if (fp == NULL) {
+        printf("No expenses found\n");
+        return;
+    }
+    char line[256];
+    float total = 0;
+    printf("\n-- Expenses --\n");
+    while (fgets(line, sizeof(line), fp)) {
+        char cat[100];
+        float amt;
+        if (sscanf(line, "%99[^\t]\t%f", cat, &amt) == 2) {
+            printf("%-30s Rs. %.2f\n", cat, amt);
+            total += amt;
+        }
+    }
+    fclose(fp);
+    printf("Total = Rs. %.2f\n", total);
+}
+
+void addSavings() {
+    FILE *fp = fopen("savings.txt", "w");
+    if (fp == NULL) {
+        printf("Cannot open savings.txt\n");
+        return;
+    }
+    float s;
+    printf("Enter monthly savings: ");
+    if (scanf("%f", &s) != 1) {
+        printf("Invalid number\n");
+        while (getchar() != '\n');
+        fclose(fp);
+        return;
+    }
+    while (getchar() != '\n');
+    fprintf(fp, "%.2f\n", s);
+    fclose(fp);
+    printf("Saved\n");
+}
+
+void viewSavings() {
+    FILE *fp = fopen("savings.txt", "r");
+    if (fp == NULL) {
+        printf("No savings data\n");
+        return;
+    }
+    float s;
+    if (fscanf(fp, "%f", &s) == 1) printf("Savings = Rs. %.2f\n", s);
+    else printf("No savings value found\n");
+    fclose(fp);
+}
+
+void showBalance() {
+    float total = 0;
+    FILE *fp = fopen("expense.txt", "r");
+    if (fp) {
+        char line[256];
+        while (fgets(line, sizeof(line), fp)) {
+            float amt;
+            if (sscanf(line, "%* [^\t]\t%f", &amt) != 1) {
+                char cat[100];
+                if (sscanf(line, "%99[^\t]\t%f", cat, &amt) == 2) total += amt;
+            } else total += amt;
+        }
+        fclose(fp);
+    }
+    float s = 0;
+    FILE *fs = fopen("savings.txt", "r");
+    if (fs) {
+        fscanf(fs, "%f", &s);
+        fclose(fs);
+    }
+    printf("Total Expenses: Rs. %.2f\n", total);
+    printf("Savings: Rs. %.2f\n", s);
+    if (s - total < 0) printf("You overspent by Rs. %.2f\n", total - s);
+    else printf("Remaining Rs. %.2f\n", s - total);
+}
+
+int main() {
+    int choice;
+    while (1) {
+        printf("\n1 Add Expense\n2 View Expenses\n3 Add/Update Savings\n4 View Savings\n5 Show Balance\n6 Exit\n");
+        printf("Choice: ");
+        if (scanf("%d", &choice) != 1) {
+            printf("Invalid input\n");
+            while (getchar() != '\n');
+            continue;
+        }
+        while (getchar() != '\n');
+        if (choice == 1) addExpense();
+        else if (choice == 2) viewExpenses();
+        else if (choice == 3) addSavings();
+        else if (choice == 4) viewSavings();
+        else if (choice == 5) showBalance();
+        else if (choice == 6) break;
+        else printf("Invalid choice\n");
+    }
+    return 0;
+}
